@@ -1,0 +1,9 @@
+{
+  "name": "amani_ai_web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node ./scripts/vercel_build.js",
+    "vercel-build": "node ./scripts/vercel_build.js"
+  }
+}

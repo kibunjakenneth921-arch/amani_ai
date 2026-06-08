@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Users can read/write only their own user document
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.id && request.resource.data.email is string;
+      allow update, delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Journals: owner-only access and basic validation
+    match /journals/{docId} {
+      allow read, write: if isSignedIn() && request.auth.uid == resource.data.userId || (isSignedIn() && request.auth.uid == request.resource.data.userId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId && request.resource.data.content is string;
+    }
+
+    // Moods / check-ins
+    match /moods/{docId} {
+      allow read, write: if isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId && request.resource.data.mood is int;
+    }
+
+    // Goals
+    match /goals/{goalId} {
+      allow read, write: if isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId && request.resource.data.title is string;
+    }
+
+    // Conversations and nested messages - owner-only
+    match /conversations/{convId} {
+      allow read, write: if isSignedIn() && (request.auth.uid == resource.data.userId || (request.resource != null && request.auth.uid == request.resource.data.userId));
+
+      match /messages/{msgId} {
+        allow read, create: if isSignedIn() && (request.auth.uid == resource.data.userId || (request.resource != null && request.auth.uid == request.resource.data.userId));
+        allow update, delete: if isSignedIn() && request.auth.uid == resource.data.userId;
+      }
+    }
+
+    // Notifications tokens under users subcollection
+    match /users/{userId}/fcmTokens/{tokenId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

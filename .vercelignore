@@ -1,0 +1,13 @@
+flutter/
+node_modules/
+.dart_tool/
+.pub-cache/
+.firebase/
+.idea/
+.vscode/
+*.log
+.DS_Store
+.buildlog
+.build
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
